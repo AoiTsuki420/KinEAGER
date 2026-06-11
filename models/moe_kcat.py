@@ -1,11 +1,11 @@
-"""KcatMoE: OOD-aware mixture of (generalist) main predictor + (specialist) kcat expert.
+"""KinEAGER: OOD-aware mixture of (generalist) main predictor + (specialist) kcat expert.
 
 路由信号：查询序列的 ESM 平均池化向量 vs. expert 训练集索引的余弦距离。
 距离越大（越 OOD），expert 权重越高。
 
 组件:
   - OODRouter: 输入查询 embedding → 输出 (w_expert, ood_distance)
-  - KcatMoE  : 持有 main / expert / router，forward(batch) 返回融合结果与所有中间量
+  - KinEAGER  : 持有 main / expert / router，forward(batch) 返回融合结果与所有中间量
 
 仅做推理封装；所有子模块内部如何 MC-Dropout 由本模块包装。
 """
@@ -74,7 +74,7 @@ class OODRouter(nn.Module):
 
 
 
-class KcatMoE(nn.Module):
+class KinEAGER(nn.Module):
     """统一的 MoE 推理壳。query_encoder 用于算 OOD 路由的 embedding（通常复用 expert 的 ESM）。"""
 
     def __init__(

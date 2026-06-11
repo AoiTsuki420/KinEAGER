@@ -1,4 +1,4 @@
-"""Mock smoke test for KcatMoE + OODRouter.
+"""Mock smoke test for KinEAGER + OODRouter.
 
 Validates the fusion + routing logic without requiring a real expert checkpoint.
 Loads the real precomputed train index (runs/moe_index_smoke/train_emb.npy).
@@ -16,7 +16,7 @@ import torch.nn as nn
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 
-from models.moe_kcat import KcatMoE, OODRouter, build_router_from_npy  # noqa: E402
+from models.moe_kcat import KinEAGER, OODRouter, build_router_from_npy  # noqa: E402
 
 
 
@@ -135,7 +135,7 @@ def test_fusion_math(device):
     expert = MockExpert(base=3.0, noise=0.0).to(device)
     q_enc = MockEsmEncoder(hidden_dim=D).to(device)
 
-    moe = KcatMoE(main, expert, router, q_enc,
+    moe = KinEAGER(main, expert, router, q_enc,
                   main_mc_samples=3, expert_mc_samples=3,
                   hard_gate_on_no_struct=True,
                   use_precision_weighting=False,
@@ -179,7 +179,7 @@ def test_hard_gate_no_struct(device):
     expert = MockExpert(base=5.0, noise=0.0).to(device)
     q_enc = MockEsmEncoder(hidden_dim=D).to(device)
 
-    moe = KcatMoE(main, expert, router, q_enc,
+    moe = KinEAGER(main, expert, router, q_enc,
                   main_mc_samples=1, expert_mc_samples=1,
                   hard_gate_on_no_struct=True,
                   use_precision_weighting=False).to(device)
@@ -221,11 +221,11 @@ def test_precision_weighting(device):
     expert = NoisyExpert().to(device)
     q_enc = MockEsmEncoder(hidden_dim=D).to(device)
 
-    moe_off = KcatMoE(main, expert, router, q_enc,
+    moe_off = KinEAGER(main, expert, router, q_enc,
                       main_mc_samples=2, expert_mc_samples=2,
                       hard_gate_on_no_struct=True,
                       use_precision_weighting=False).to(device)
-    moe_on = KcatMoE(main, expert, router, q_enc,
+    moe_on = KinEAGER(main, expert, router, q_enc,
                      main_mc_samples=2, expert_mc_samples=2,
                      hard_gate_on_no_struct=True,
                      use_precision_weighting=True).to(device)

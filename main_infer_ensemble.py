@@ -1,4 +1,4 @@
-"""KcatMoE 推理: main predictor + kcat expert + OOD 路由。
+"""KinEAGER 推理: main predictor + kcat expert + OOD 路由。
 
 默认路由:
   OOD score = 1 - max_cosine( ESM(query_seq), train_index )
@@ -39,7 +39,7 @@ from models.kcat_expert import KcatExpertConfig
 from models.kcat_expert_dataset import (
     KcatExpertDataset, collate_kcat_expert, LIG_ATOM_FEAT_DIM,
 )
-from models.moe_kcat import KcatMoE, build_router_from_npy
+from models.moe_kcat import KinEAGER, build_router_from_npy
 from main_train_kcat_expert import KcatExpertWithText, _ProtWrap, _LigWrap, DEFAULT_RENAME
 
 
@@ -171,7 +171,7 @@ def main():
     )
     print(f"[router] index size={router.train_emb.shape}  d0={router.d0} tau={router.tau} k={router.k}")
 
-    moe = KcatMoE(
+    moe = KinEAGER(
         main_model=main_model,
         expert_model=expert,
         router=router,
@@ -231,14 +231,14 @@ def main():
 
     print_metrics(compute_metrics(mu_m, y, "main_full"), "Main — full set")
     print_metrics(compute_metrics(mu_e, y, "expert_full"), "Expert — full set")
-    print_metrics(compute_metrics(mu_ens, y, "moe_full"), "KcatMoE — full set")
+    print_metrics(compute_metrics(mu_ens, y, "moe_full"), "KinEAGER — full set")
     if has.any():
         print_metrics(compute_metrics(mu_m[has], y[has], "main_sub"),
                       "Main — has_struct subset only")
         print_metrics(compute_metrics(mu_e[has], y[has], "expert_sub"),
                       "Expert — has_struct subset only")
         print_metrics(compute_metrics(mu_ens[has], y[has], "moe_sub"),
-                      "KcatMoE — has_struct subset only")
+                      "KinEAGER — has_struct subset only")
 
 
 if __name__ == "__main__":

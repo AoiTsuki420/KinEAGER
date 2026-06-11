@@ -1,4 +1,4 @@
-"""为 KcatMoE 的 OOD router 预计算 expert 训练集序列的 ESM 平均池化 embedding。
+"""为 KinEAGER 的 OOD router 预计算 expert 训练集序列的 ESM 平均池化 embedding。
 
 输出一个 .npy（float32，已 L2 归一化）+ 一个 .csv（uniq_id → sequence 映射）。
 用最近邻余弦距离做 OOD 路由时，直接加载 .npy 即可。

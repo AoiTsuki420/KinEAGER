@@ -1,12 +1,12 @@
-# KcatMoE
+# KinEAGER
 
-KcatMoE is an evidence-aware multi-task Transformer framework for enzyme kinetics prediction under domain shift. It jointly predicts log10-transformed `kcat`, `Km`, and `kcat/Km`, handles missing structural evidence through availability-aware gating, and reports uncertainty through domain-task heteroscedastic training and ensemble/MoE inference.
+KinEAGER is an evidence-aware multi-task Transformer framework for enzyme kinetics prediction under domain shift. It jointly predicts log10-transformed `kcat`, `Km`, and `kcat/Km`, handles missing structural evidence through availability-aware gating, and reports uncertainty through domain-task heteroscedastic training and ensemble/MoE inference.
 
 This repository contains the functional code needed to reproduce the main computational workflow described in the manuscript: data harmonization, structural and physicochemical feature construction, multi-task model training, OOD-aware kcat expert routing, external baseline adaptation, evaluation, and in silico mutation scanning.
 
 ## Model Overview
 
-KcatMoE combines:
+KinEAGER combines:
 
 - ESM-2 protein sequence encoding and MolT5 substrate SMILES encoding.
 - Cross-modal protein-substrate interaction blocks.
@@ -16,17 +16,17 @@ KcatMoE combines:
 - Domain-task heteroscedastic loss for multi-source kinetic data.
 - A kcat OOD expert and nearest-neighbor ESM embedding router for sequence-cluster OOD inference.
 
-The main model is used for IID multi-task results, ablations, missing-modality experiments, and uncertainty calibration. The KcatMoE mixture route is used for kcat sequence-cluster OOD inference.
+The main model is used for IID multi-task results, ablations, missing-modality experiments, and uncertainty calibration. The KinEAGER mixture route is used for kcat sequence-cluster OOD inference.
 
 ## Repository Layout
 
 ```text
-KcatMoE_release/
+KinEAGER/
   data.py                              Dataset and collate utilities
   main_train_predictor_multigpu.py      Main multi-task DDP/AMP training entry point
   main_train_kcat_expert.py             kcat specialist training entry point
   main_infer_predictor.py               Main-model inference
-  main_infer_ensemble.py                Main + expert KcatMoE inference
+  main_infer_ensemble.py                Main + expert KinEAGER inference
   eval_kcat_predictions.py              Prediction metric utility
   models/                               Encoders, interaction blocks, predictor, expert, router
   tools/                                Data preparation, feature extraction, OOD split, baseline and plotting tools
@@ -39,8 +39,8 @@ Large training tables, checkpoints, model weights, run outputs, notebooks, cache
 ## Installation
 
 ```bash
-conda create -n kcatmoe python=3.10 -y
-conda activate kcatmoe
+conda create -n kineager python=3.10 -y
+conda activate kineager
 pip install -r requirements.txt
 ```
 
@@ -132,7 +132,7 @@ python tools/precompute_train_embed.py \
   --max_len 1024
 ```
 
-Run KcatMoE inference:
+Run KinEAGER inference:
 
 ```bash
 python main_infer_ensemble.py \
@@ -140,7 +140,7 @@ python main_infer_ensemble.py \
   --main_ckpt runs/id_full_seed42/seed42/predictor_best_ema.pt \
   --expert_ckpt runs/kcat_expert/best.pt \
   --train_emb_npy runs/moe_index/train_emb.npy \
-  --out_csv results/kcatmoe_testood40.csv \
+  --out_csv results/kineager_testood40.csv \
   --esm_path /path/to/esm2_t33_650M_UR50D \
   --molt5_path /path/to/molt5-base-smiles2caption \
   --main_esm /path/to/esm2_t33_650M_UR50D \
@@ -192,12 +192,12 @@ These scripts support computational prioritization only; experimental validation
 ## Citation
 
 ```bibtex
-@article{kcatmoe2026,
-  title   = {KcatMoE: Evidence-aware Multi-task Modeling and Uncertainty Calibration for Enzyme Kinetics Prediction},
+@article{kineager2026,
+  title   = {KinEAGER: Evidence-aware Multi-task Modeling and Uncertainty Calibration for Enzyme Kinetics Prediction},
   author  = {TBD},
   journal = {TBD},
   year    = {2026},
-  url     = {https://github.com/Rieide/KcatMoE}
+  url     = {https://github.com/AoiTsuki420/KinEAGER}
 }
 ```
 

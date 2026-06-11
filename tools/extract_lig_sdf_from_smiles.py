@@ -1,6 +1,6 @@
 """从 reactant_smiles 生成 3D ligand SDF, 并把 lig_sdf_path 写回 CSV。
 
-为 splits_revision 的 csv 准备 KcatExpert / KcatMoE 推理时需要的 ligand SDF。
+为 splits_revision 的 csv 准备 KcatExpert / KinEAGER 推理时需要的 ligand SDF。
 RDKit ETKDG embed → MMFF94 优化 → 写 SDF 文件。
 
 用法:

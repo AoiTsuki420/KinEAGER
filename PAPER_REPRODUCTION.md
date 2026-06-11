@@ -1,6 +1,6 @@
 # Paper Reproduction Guide
 
-This document maps the KcatMoE manuscript workflow to the source files in this repository. It is intended for reviewers and readers who want to inspect or reproduce the computational experiments without local notebook state.
+This document maps the KinEAGER manuscript workflow to the source files in this repository. It is intended for reviewers and readers who want to inspect or reproduce the computational experiments without local notebook state.
 
 ## Manuscript-to-code Mapping
 
@@ -9,7 +9,7 @@ This document maps the KcatMoE manuscript workflow to the source files in this r
 | Unified multi-source kinetics table | `tools/build_unified_training_csv.py` |
 | Protein and ligand structural vectors | `tools/build_struct_npz.py`, `final_contact.py` |
 | RDKit physicochemical evidence | `tools/build_phys_features.py` |
-| Main multi-task KcatMoE predictor | `models/predictor.py`, `main_train_predictor_multigpu.py` |
+| Main multi-task KinEAGER predictor | `models/predictor.py`, `main_train_predictor_multigpu.py` |
 | ESM-2 and MolT5 encoders | `models/encoders.py` |
 | Cross-modal interaction blocks | `models/interactions.py` |
 | Domain-task uncertainty loss and metrics | `main_train_predictor_multigpu.py`, `utils.py` |
@@ -26,7 +26,7 @@ This document maps the KcatMoE manuscript workflow to the source files in this r
 3. Train the main multi-task predictor with fixed `split_seed=42` and `split_mode=group_pair`.
 4. Train the kcat expert on the specialist kcat table.
 5. Precompute the expert training ESM embedding index.
-6. Run main-model IID inference and KcatMoE sequence-cluster OOD inference.
+6. Run main-model IID inference and KinEAGER sequence-cluster OOD inference.
 7. Summarize metrics from `metrics.json`, prediction CSV/NPZ files, and split metadata.
 8. Run counterfactual evidence ablations by changing structural and physical evidence modes while keeping the same split.
 
