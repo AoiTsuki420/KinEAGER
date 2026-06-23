@@ -197,7 +197,7 @@ These scripts support computational prioritization only; experimental validation
   author  = {TBD},
   journal = {TBD},
   year    = {2026},
-  url     = {https://github.com/AoiTsuki420/KinEAGER}
+  url     = {https://github.com/Rieide/KinEAGER}
 }
 ```
 
