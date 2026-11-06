@@ -70,7 +70,7 @@ def resolve_runtime_paths(profile=None):
     raw["project_root"] = str(root)
     for key, env_name in ENV_OVERRIDES.items():
         env_value = os.getenv(env_name)
-        if env_value:
+        if env_value and key != "project_root":
             raw[key] = env_value
 
     paths: dict[str, Any] = {}

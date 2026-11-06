@@ -50,8 +50,7 @@ Linux with CUDA/NCCL. SwanLab logging is optional.
 | Prepare unified data | `python tools/data/build_unified_training_csv.py --help` |
 | Compute prediction metrics | `python tools/evaluation/eval_kcat.py --help` |
 
-For single-host distributed training, use `torchrun --nproc_per_node=<GPUs>
-train.py ...`.
+For single-host distributed training, use `torchrun --nproc_per_node=<GPUs> train.py ...`.
 
 Main training expects **linear** kcat in s^-1 and Km in M; expert CSVs instead
 use `kcat_log10`. Keep structural NPZ rows aligned with their training CSV.

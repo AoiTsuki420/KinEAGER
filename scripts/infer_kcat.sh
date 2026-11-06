@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-export ROOT="${ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)}"
+ROOT="$(cd -- "${ROOT:-$(dirname -- "${BASH_SOURCE[0]}")/..}" && pwd)"
+export ROOT
 cd "$ROOT"
 export DATA_ROOT=${DATA_ROOT:-$ROOT/data/splits}
 export OUT_ROOT=${OUT_ROOT:-$ROOT/results/kcat}
@@ -15,6 +16,15 @@ export EXPERT_CKPT=${EXPERT_CKPT:-$ROOT/runs/kcat_expert/best.pt}
 export TRAIN_EMB_NPY=${TRAIN_EMB_NPY:-$ROOT/runs/moe_index/train_emb.npy}
 export OMP_NUM_THREADS=1
 export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0}
+
+# Resolve user-provided relative paths before changing into output directories.
+for path_var in DATA_ROOT OUT_ROOT OURS_WEIGHTS OURS_SCALER ESM_PATH MOLT5_PATH EXPERT_CKPT TRAIN_EMB_NPY; do
+  case "${!path_var}" in
+    /*|[A-Za-z]:/*) ;;
+    *) printf -v "$path_var" '%s/%s' "$ROOT" "${!path_var}" ;;
+  esac
+  export "$path_var"
+done
 
 __check_writable () {
   local d="$1"
@@ -72,19 +82,19 @@ preflight () {
     echo "[ERR] preflight: main ckpt missing: $OURS_WEIGHTS"; exit 1
   fi
 
-  if [ "$MODE" = "ensemble" ]; then
+  if [ "$MODE" = "ensemble" ] || [ "$MODE" = "moe_softgate" ]; then
     [ -f "$EXPERT_CKPT" ] || { echo "[ERR] ensemble mode: EXPERT_CKPT missing: $EXPERT_CKPT"; exit 1; }
     [ -f "$TRAIN_EMB_NPY" ] || { echo "[ERR] ensemble mode: TRAIN_EMB_NPY missing: $TRAIN_EMB_NPY"; exit 1; }
-    echo "[WARN] ensemble mode 选用了, 但 splits_revision csv 通常不带 prot_pdb_path/lig_sdf_path,"
-    echo "       MoE 会因 has_struct=False 全程硬门控回 main, 实际等同 single 但慢 ~2x. 确认要继续?"
-    sleep 3
+    if [ "$MODE" = "ensemble" ]; then
+      echo "[WARN] samples without structures use the main model only in hard-gated ensemble mode."
+    fi
   fi
 
   echo "[OK] preflight: env='${OURS_ENV:-current shell}' mode=$MODE"
   echo "     ESM    = $ESM_PATH"
   echo "     MolT5  = $MOLT5_PATH"
   echo "     main   = $OURS_WEIGHTS"
-  if [ "$MODE" = "ensemble" ]; then
+  if [ "$MODE" = "ensemble" ] || [ "$MODE" = "moe_softgate" ]; then
     echo "     expert = $EXPERT_CKPT"
     echo "     index  = $TRAIN_EMB_NPY"
   fi
@@ -94,7 +104,15 @@ preflight
 pick_csv () {
   local iter="$1" split="$2"
   case "$split" in
-    test)      ls "$DATA_ROOT/$iter"/kcat_test_split_*.csv 2>/dev/null | head -n1 ;;
+    test)
+      local csv
+      for csv in "$DATA_ROOT/$iter"/kcat_test_split_*.csv; do
+        [ -f "$csv" ] || continue
+        printf '%s\n' "$csv"
+        return 0
+      done
+      return 0
+      ;;
     testood99) echo "$DATA_ROOT/$iter/kcat-seq_test_sequence_99cluster.csv" ;;
     testood80) echo "$DATA_ROOT/$iter/kcat-seq_test_sequence_80cluster.csv" ;;
     testood60) echo "$DATA_ROOT/$iter/kcat-seq_test_sequence_60cluster.csv" ;;

@@ -181,6 +181,9 @@ structure availability, and ensemble mean/variance.
   `scripts/infer_kcat.sh` and `scripts/infer_km.sh` run prepared
   kcat/Km iteration workflows. Inspect their environment settings before use:
   they expect existing split tables, backbones, and checkpoints.
+  `ROOT` defaults to the checkout; relative `DATA_ROOT`, `OUT_ROOT`, model and
+  checkpoint paths are resolved under `ROOT` before inference changes directories.
+  Set `ITERS_TO_RUN="1 2"` to select iterations. Missing split files are skipped.
 - `tools/evaluation/run_external_baseline.py` adapts external baseline repositories or supplied
   prediction CSVs; it does not bundle baseline models. `tools/evaluation/summarize_sota_results.py`
   collects metrics. `tools/evaluation/calibrate_moe_threshold.py` searches routing thresholds

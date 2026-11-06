@@ -2399,7 +2399,7 @@ def main():
     args = p.parse_args()
     if (KineticsPredictor is None) or (PredictorConfig is None):
         raise ImportError(
-            "Failed to import models.predictor dependencies. "
+            "Failed to import kineager.models.predictor dependencies. "
             f"Original error: {_PREDICTOR_IMPORT_ERROR}"
         )
     if AutoConfig is None:

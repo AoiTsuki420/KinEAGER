@@ -31,3 +31,11 @@ def test_workspace_and_individual_overrides(tmp_path):
     assert paths['runs_dir'] == runs
     assert paths['best_ema_path'] == tmp_path / 'saved/predictor_best_ema.pt'
     assert paths['esm_model_path'] == str(model)
+
+
+def test_relative_workspace_is_resolved_only_once(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    with patch.dict(os.environ, {'CATA_PROJECT_ROOT': 'workspace'}, clear=True):
+        paths = resolve_runtime_paths()
+    assert paths['project_root'] == tmp_path / 'workspace'
+    assert paths['runs_dir'] == paths['project_root'] / 'runs'

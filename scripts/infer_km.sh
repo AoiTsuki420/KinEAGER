@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-export ROOT="${ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)}"
+ROOT="$(cd -- "${ROOT:-$(dirname -- "${BASH_SOURCE[0]}")/..}" && pwd)"
+export ROOT
 cd "$ROOT"
 export DATA_ROOT=${DATA_ROOT:-$ROOT/data/splits}
 export OUT_ROOT=${OUT_ROOT:-$ROOT/results/km}
@@ -12,6 +13,15 @@ export ESM_PATH=${ESM_PATH:-$ROOT/backbone/esm2_t33_650M_UR50D}
 export MOLT5_PATH=${MOLT5_PATH:-$ROOT/backbone/molt5-base-smiles2caption}
 export OMP_NUM_THREADS=1
 export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0}
+
+# Resolve user-provided relative paths before changing into output directories.
+for path_var in DATA_ROOT OUT_ROOT OURS_WEIGHTS OURS_SCALER ESM_PATH MOLT5_PATH; do
+  case "${!path_var}" in
+    /*|[A-Za-z]:/*) ;;
+    *) printf -v "$path_var" '%s/%s' "$ROOT" "${!path_var}" ;;
+  esac
+  export "$path_var"
+done
 
 __check_writable () {
   local d="$1"
@@ -63,7 +73,15 @@ preflight
 pick_csv () {
   local iter="$1" split="$2"
   case "$split" in
-    test)      ls "$DATA_ROOT/$iter"/km_test_split_*.csv 2>/dev/null | head -n1 ;;
+    test)
+      local csv
+      for csv in "$DATA_ROOT/$iter"/km_test_split_*.csv; do
+        [ -f "$csv" ] || continue
+        printf '%s\n' "$csv"
+        return 0
+      done
+      return 0
+      ;;
     testood99) echo "$DATA_ROOT/$iter/km-seq_test_sequence_99cluster.csv" ;;
     testood80) echo "$DATA_ROOT/$iter/km-seq_test_sequence_80cluster.csv" ;;
     testood60) echo "$DATA_ROOT/$iter/km-seq_test_sequence_60cluster.csv" ;;

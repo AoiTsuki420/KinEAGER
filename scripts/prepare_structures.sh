@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-export ROOT="${ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)}"
+ROOT="$(cd -- "${ROOT:-$(dirname -- "${BASH_SOURCE[0]}")/..}" && pwd)"
+export ROOT
 cd "$ROOT"
 
 export DATA_ROOT=${DATA_ROOT:-$ROOT/data/splits}
@@ -10,6 +11,15 @@ export PDB_JSON=${PDB_JSON:-$ROOT/data/pdbrecords.json}
 export PDB_OUT=${PDB_OUT:-$ROOT/data/struct_cache/pdbs}
 export SDF_OUT=${SDF_OUT:-$ROOT/data/struct_cache/sdfs}
 export OURS_ENV=${OURS_ENV:-}
+
+# Resolve user-provided relative paths before changing into output directories.
+for path_var in DATA_ROOT WORK_ROOT PDB_JSON PDB_OUT SDF_OUT; do
+  case "${!path_var}" in
+    /*|[A-Za-z]:/*) ;;
+    *) printf -v "$path_var" '%s/%s' "$ROOT" "${!path_var}" ;;
+  esac
+  export "$path_var"
+done
 
 run_py () {
   if [ -n "$OURS_ENV" ]; then
@@ -86,12 +96,14 @@ run_py "$ROOT/tools/data/extract_lig_sdf_from_smiles.py" \
   --lig_path_col lig_sdf_path \
   --inplace
 
-echo "===== Verify: sample iteration_1/test ====="
-SAMPLE="$CSV_ROOT/iteration_1/$(basename $(ls $CSV_ROOT/iteration_1/kcat_test_split_*.csv | head -n1))"
-run_py - <<PY
+echo "===== Verify: first available split ====="
+SAMPLE="${TEST_CSVS[0]}"
+SAMPLE="$SAMPLE" run_py - <<'PY'
+import os
 import pandas as pd
-df = pd.read_csv("$SAMPLE")
-print(f"[verify] $SAMPLE: rows={len(df)}")
+sample = os.environ["SAMPLE"]
+df = pd.read_csv(sample)
+print(f"[verify] {sample}: rows={len(df)}")
 print(f"  prot_pdb_path filled: {df['prot_pdb_path'].notna().sum()}/{len(df)}")
 print(f"  lig_sdf_path  filled: {df['lig_sdf_path'].notna().sum()}/{len(df)}")
 both = (df['prot_pdb_path'].notna() & df['lig_sdf_path'].notna()).sum()
@@ -99,7 +111,7 @@ print(f"  both filled (has_struct=True): {both}/{len(df)} = {100.0*both/len(df):
 PY
 
 echo "[done] PDBs in $PDB_OUT, SDFs in $SDF_OUT"
-echo "       50 csvs were updated in place; expert/MoE pipeline now ready."
+echo "       ${#TEST_CSVS[@]} csvs were updated in place; expert/MoE pipeline now ready."
 echo ""
 echo ">>> 下一步推理:"
 echo "       export DATA_ROOT=$CSV_ROOT"
