@@ -1,7 +1,5 @@
 import torch
 import numpy as np
-import matplotlib.pyplot as plt
-import numpy as np
 try:
     import swanlab
 except Exception:
@@ -10,10 +8,9 @@ except Exception:
         def log(*args, **kwargs):
             return None
     swanlab = _SwanlabStub()
-import numpy as np
 import json
 from sklearn.preprocessing import StandardScaler
-import os, torch
+import os
 import torch.distributed as dist
 
 

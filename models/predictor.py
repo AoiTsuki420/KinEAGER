@@ -7,7 +7,6 @@ from .encoders import ProteinEncoder, LigandEncoder
 from .interactions import CrossAttentionBlock, ResidueMask,LigandMask
 from utils import masked_mean
 import json
-import loralib as lora
 from peft import LoraConfig, get_peft_model
 from transformers import AutoModel
 from transformers import AutoModelForSeq2SeqLM

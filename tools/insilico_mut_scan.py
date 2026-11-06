@@ -4,7 +4,7 @@ tools/insilico_mut_scan.py
 In silico 单点突变扫描：对给定蛋白序列的指定位点枚举全部替换，
 通过 KineticsPredictor 打分，输出兼容 insilico_mut_scan.csv 格式的结果。
 
-与 run_directed_evo.py 的区别：
+扫描范围：
   - 本脚本是一次性独立扫描，无迭代循环
   - 输出列格式与原始 insilico_mut_scan.csv 一致（包含 group 标注）
   - score_km 约定：正值=Km升高（与原始 CSV 一致），在 pareto_filter.py 中会自动取反

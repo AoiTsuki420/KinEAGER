@@ -4,7 +4,7 @@
   python main_train_kcat_expert.py \
       --train_csv data/skid_kcat_train.csv \
       --val_csv   data/skid_kcat_val.csv \
-      --out_dir   runs/kcat_expert_v1 \
+      --out_dir   runs/kcat_expert \
       --batch_size 32 --epochs 40 --lr 3e-4 --lora_lr 3e-5
 """
 

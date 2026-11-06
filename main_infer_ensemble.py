@@ -10,7 +10,7 @@
   python main_infer_ensemble.py \
       --test_csv  data/my_ood.csv \
       --main_ckpt runs/main_predictor/best.pt \
-      --expert_ckpt runs/kcat_expert_v7/best.pt \
+      --expert_ckpt runs/kcat_expert/best.pt \
       --train_emb_npy runs/moe_index/train_emb.npy \
       --out_csv   result/moe_preds.csv \
       --router_d0 0.15 --router_tau 0.05 --router_k 1 \

@@ -13,7 +13,7 @@ insilico_mut_scan.csv（以及 main_infer_predictor 原始输出）中：
 本脚本默认对 score_km 取反，使 "正值=有益" 在 Pareto 优化中方向一致：
   score_km_beneficial = -score_km
 
-若你的输入 CSV 中 score_km 已经是 "正值=有益"（如 run_directed_evo.py 输出），
+若你的输入 CSV 中 score_km 已经是 "正值=有益"，
 请加 --km-already-beneficial 跳过取反步骤。
 
 目标空间（取反后，均为越大越好）：

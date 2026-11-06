@@ -45,7 +45,6 @@ except Exception:
     LoraConfig = None
     get_peft_model = None
 from torch.optim.lr_scheduler import LambdaLR 
-from tracing import *
 from path_config import resolve_runtime_paths, ensure_paths
 import os, math, time, json, random
 import torch
@@ -3041,7 +3040,6 @@ def main():
         print("Saved predictor.pt in {model_path}")
 
 if __name__ == "__main__":
-    start_tracing()
     try:
         main()
     finally:

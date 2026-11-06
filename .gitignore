@@ -3,6 +3,12 @@
 .ipynb_checkpoints/
 .pytest_cache/
 wandb/
+swanlog/
+backbone/
+weights/
+data/
+.venv/
+outputs/
 runs/
 result/
 results/
@@ -10,6 +16,8 @@ checkpoints/
 *.pt
 *.pth
 *.ckpt
+*.safetensors
+*.ipynb
 *.npz
 *.npy
 *.tar.gz

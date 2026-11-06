@@ -1,210 +1,224 @@
 # KinEAGER
 
-KinEAGER is an evidence-aware multi-task Transformer framework for enzyme kinetics prediction under domain shift. It jointly predicts log10-transformed `kcat`, `Km`, and `kcat/Km`, handles missing structural evidence through availability-aware gating, and reports uncertainty through domain-task heteroscedastic training and ensemble/MoE inference.
+KinEAGER predicts enzyme kinetic parameters from protein sequences and substrate
+SMILES. The main model jointly predicts `kcat`, `Km`, and `kcat/Km`, with optional
+structural and physicochemical evidence, source-domain conditioning, and uncertainty
+heads. A separate kcat specialist and ESM embedding router support main/expert
+mixture inference under sequence distribution shift.
 
-This repository contains the functional code needed to reproduce the main computational workflow described in the manuscript: data harmonization, structural and physicochemical feature construction, multi-task model training, OOD-aware kcat expert routing, external baseline adaptation, evaluation, and in silico mutation scanning.
-
-## Model Overview
-
-KinEAGER combines:
-
-- ESM-2 protein sequence encoding and MolT5 substrate SMILES encoding.
-- Cross-modal protein-substrate interaction blocks.
-- Optional protein and ligand structural feature branches.
-- Availability-aware structural gating to distinguish valid structural evidence from missing evidence.
-- Physicochemical evidence features and counterfactual evidence ablations.
-- Domain-task heteroscedastic loss for multi-source kinetic data.
-- A kcat OOD expert and nearest-neighbor ESM embedding router for sequence-cluster OOD inference.
-
-The main model is used for IID multi-task results, ablations, missing-modality experiments, and uncertainty calibration. The KinEAGER mixture route is used for kcat sequence-cluster OOD inference.
-
-## Repository Layout
-
-```text
-KinEAGER/
-  data.py                              Dataset and collate utilities
-  main_train_predictor_multigpu.py      Main multi-task DDP/AMP training entry point
-  main_train_kcat_expert.py             kcat specialist training entry point
-  main_infer_predictor.py               Main-model inference
-  main_infer_ensemble.py                Main + expert KinEAGER inference
-  eval_kcat_predictions.py              Prediction metric utility
-  models/                               Encoders, interaction blocks, predictor, expert, router
-  tools/                                Data preparation, feature extraction, OOD split, baseline and plotting tools
-  tests/                                Focused smoke tests
-  test_scripts/                         Lightweight pipeline and leakage checks
-```
-
-Large training tables, checkpoints, model weights, run outputs, notebooks, caches, and raw experimental assets are intentionally excluded. Store those through a data archive or release asset rather than the source repository.
+This repository contains source code. Training data, pretrained backbones, trained
+checkpoints, and experiment outputs must be supplied separately. Command examples
+below are templates for prepared data, rather than a bundled reproduction dataset.
 
 ## Installation
 
+Use Python 3.10 or later. Install a PyTorch build suitable for your hardware, then:
+
 ```bash
-conda create -n kineager python=3.10 -y
-conda activate kineager
 pip install -r requirements.txt
 ```
 
-The original experiments used PyTorch, HuggingFace Transformers, ESM-2 (`esm2_t33_650M_UR50D`), MolT5 (`molt5-base-smiles2caption`), RDKit, pandas, numpy, scikit-learn, scipy, tqdm, and optional wandb logging. For offline servers, download ESM-2 and MolT5 locally and pass their local paths to the training and inference scripts.
+`peft` provides LoRA adapters; RDKit provides molecular features. `matplotlib` is
+used by plotting tools. SwanLab logging is optional (`pip install swanlab`); the
+training code uses a no-op logger when it is unavailable. Linux with CUDA/NCCL is
+the intended environment for distributed training; Bash is needed for `.sh` scripts.
 
-## Paths and Local Models
+Run all commands below from the repository root. Download the ESM-2 and MolT5
+backbones first if working offline. Use the same model architecture and adapter
+settings when loading a checkpoint as when training it.
 
-Python training defaults use `data/`, `runs/`, and `weights/` under the checkout.
-Set `CATA_PROJECT_ROOT` to use another workspace; individual paths can be overridden
-with `CATA_*` variables defined in `path_config.py`. Relative filesystem overrides
-are resolved against that workspace. The platform-specific profiles have been removed.
+## Repository contents
 
-Encoder defaults use the Hugging Face model identifiers
-`facebook/esm2_t33_650M_UR50D` and `laituan245/molt5-base-smiles2caption`.
-For local models, pass their directories via the command-line model options or
-`CATA_ESM_MODEL_PATH` / `CATA_MOLT5_MODEL_PATH` for main-model training.
+| Path | Purpose |
+|---|---|
+| `main_train_predictor_multigpu.py` | Main model training and `--eval_only` evaluation |
+| `main_infer_predictor.py` | Sequence/SMILES inference; exports one task-specific CSV |
+| `main_train_kcat_expert.py` | kcat specialist training |
+| `main_infer_ensemble.py` | kcat main/expert mixture inference |
+| `models/` | Encoders, interactions, predictor, specialist, dataset, router |
+| `data.py`, `final_contact.py`, `utils.py` | Main dataset, structural arrays, losses/metrics utilities |
+| `path_config.py` | Main training path defaults and `CATA_*` environment overrides |
+| `tools/` | Data/feature preparation, OOD splits, baseline adapters, mutation analysis |
+| `eval_kcat_predictions.py`, `npz_to_predcsv.py`, `posthoc_calibrate_loso.py` | Prediction export, metrics, post-hoc calibration |
+| `tests/`, `test_scripts/` | Path, data, loss, split and mocked-model checks |
+| [PAPER_REPRODUCTION.md](PAPER_REPRODUCTION.md) | Workflow mapping and artifact conventions |
 
-The optional shell workflows locate the checkout from their script location.
-Set `DATA_ROOT`, `OUT_ROOT`, `ESM_PATH`, `MOLT5_PATH`, and checkpoint variables as
-needed; their local model defaults point to `backbone/` under the checkout.
-Existing offline-mode environment settings are respected.
+## Paths and model configuration
 
-## Data Preparation
+Main training defaults to `data/`, `runs/`, and `weights/` under the checkout,
+independent of the current working directory. Set `CATA_PROJECT_ROOT` to use a
+separate workspace, or override individual paths using the `CATA_*` variables in
+`path_config.py`. Relative filesystem overrides are resolved under that workspace.
+`CATA_PROFILE` may be unset or `default`.
 
-Build the unified multi-task table:
+Python model defaults use `facebook/esm2_t33_650M_UR50D` and
+`laituan245/molt5-base-smiles2caption`. Main standalone/mixture inference has its
+own model options, so pass the backbones explicitly to match the checkpoint.
+For local backbones, use paths such as `backbone/esm2_t33_650M_UR50D` and
+`backbone/molt5-base-smiles2caption`; these directories are not included.
+Main training also accepts `CATA_ESM_MODEL_PATH` / `CATA_MOLT5_MODEL_PATH`.
+
+## Main model data and features
+
+The main training CSV uses the following columns:
+
+| Column | Meaning |
+|---|---|
+| `Sequence` | Protein amino-acid sequence |
+| `Smiles` | Substrate SMILES |
+| `kcat(s^-1)` | Linear turnover rate in s^-1; missing labels may be NaN |
+| `Km(M)` | Linear Km in mol/L; missing labels may be NaN |
+| `source_id` | Domain identifier, such as `catapro`, `skid-kcat`, `skid-km` |
+| `Protein_path`, `Ligand_path` | Optional PDB/SDF paths for feature preparation |
+
+Do **not** log-transform main training labels in advance. The scaler converts
+kcat to log10(s^-1), Km to log10(mM), and the ratio to log10(M^-1 s^-1).
+The expert dataset has a separate schema, described below.
+
+Normalize source tables and generate features:
 
 ```bash
 python tools/build_unified_training_csv.py \
   --catapro_csv data/kcat-over-Km-data_0.4simi-10fold.csv \
   --skid_kcat_csv data/kcat_dataset_cleaned_after_drop.csv \
   --skid_km_csv data/Km_dataset_cleaned_after_drop.csv \
-  --out_csv data/unified_train_mixed.csv \
-  --skid_km_unit M
-```
+  --skid_km_unit M \
+  --out_csv data/unified_train_mixed.csv
 
-Build structural and physicochemical evidence:
-
-```bash
 python tools/build_struct_npz.py \
   --csv data/unified_train_mixed.csv \
-  --pdb_col Protein_path \
-  --sdf_col Ligand_path \
-  --pdb_dir data/protein_structures \
-  --sdf_dir data/ligand_structures \
-  --out_npz data/unified_train_mixed_struct.npz \
-  --allow_missing
+  --pdb_col Protein_path --sdf_col Ligand_path \
+  --pdb_dir data/protein_structures --sdf_dir data/ligand_structures \
+  --out_npz data/unified_train_mixed_struct.npz --allow_missing
 
 python tools/build_phys_features.py \
   --csv data/unified_train_mixed.csv \
   --out_csv data/unified_train_mixed_phys.csv
 ```
 
-Missing structural evidence should be represented by zero vectors plus an availability mask, not by dropping samples.
+Structural output contains `prot_struct` (N x 45), `lig_struct` (N x 135), and
+`row_id`. Missing or unparseable structures become zero vectors with
+`--allow_missing`; availability is inferred downstream from the vectors.
+Physicochemical output appends nine `phys_*` descriptors plus `phys_mask` and
+`phys_quality`. Keep the CSV and NPZ in the same row order; regenerating,
+filtering, or reordering the CSV requires rebuilding the corresponding NPZ.
 
-## Main Multi-task Training
+## Main training and evaluation
 
 ```bash
 torchrun --nproc_per_node=1 main_train_predictor_multigpu.py \
   -csv data/unified_train_mixed_phys.csv \
-  --final_contact_npz data/unified_train_mixed_struct.npz \
-  --run_name id_full_seed42 \
-  --split_mode group_pair \
-  --split_seed 42 \
-  --val_ratio 0.2 \
-  --test_ratio 0.2 \
+  -esm backbone/esm2_t33_650M_UR50D \
+  -molt5 backbone/molt5-base-smiles2caption \
+  --out_dir runs --run_name id_full_seed42 --seed 42 \
+  --split_mode group_pair --split_seed 42 --val_ratio 0.2 --test_ratio 0.2 \
   --source_col source_id \
-  --use_struct_branch \
-  --enable_avail_gate \
-  --use_phys_evidence \
-  --phys_drop_p 0.2 \
-  --phys_ablation real \
-  --lambda_gate_off 0.01 \
-  --lambda_gate_on 0.01 \
-  --lambda_cons 0.1 \
-  --cons_warmup_epochs 3 \
-  --struct_dropout_prob 0.4 \
-  --domain_uncertainty \
-  --num_domains 3 \
-  -epochs 35 \
-  -batch_size 24 \
-  -device cuda
+  --use_struct_branch --final_contact_npz data/unified_train_mixed_struct.npz \
+  --enable_avail_gate --use_phys_evidence --phys_ablation real \
+  --domain_uncertainty --num_domains 3 \
+  -epochs 35 -batch_size 24 -device cuda
 ```
 
-Each run writes metrics, split metadata, experiment manifest, predictions, and checkpoints under the configured run directory.
+This example enables optional evidence branches; it is not a claim that these
+arguments reproduce every manuscript experiment. Runs write artifacts under
+`runs/<run_name>/seed<seed>/`, including model weights, metrics, split metadata,
+`experiment_manifest.json`, and predictions. Increase `--nproc_per_node` to match
+the GPUs available on one training host.
 
-## kcat Expert and MoE Inference
+For evaluation with structural/physical evidence, use this same entry point with
+`--eval_only --weights runs/id_full_seed42/seed42/predictor_best_ema.pt`, preserve
+the original data, split, backbone and model arguments, and use a separate output
+run name. The standalone inference script currently does not pass those extra
+evidence inputs to the model.
 
-Train the kcat specialist:
+For sequence/SMILES-only export:
+
+```bash
+python main_infer_predictor.py \
+  -csv data/test.csv \
+  -weights runs/id_full_seed42/seed42/predictor_best_ema.pt \
+  -esm backbone/esm2_t33_650M_UR50D \
+  -molt5 backbone/molt5-base-smiles2caption \
+  --task kcat
+```
+
+It writes `predictions_kcat.csv` in the current directory (`--task km` selects
+`predictions_km.csv`). Outputs include all three predictions and uncertainty;
+`--task` selects the filename and truth-label interpretation. The optional
+`-scaler` argument is retained for compatibility and is ignored. Compute metrics
+separately with `eval_kcat_predictions.py` (`-pred`, `--pred-col`, `--true-col`).
+
+## kcat specialist and mixture inference
+
+Expert CSVs use `sequence`, `smiles`, and **log10-transformed** `kcat_log10`, with
+optional `prot_pdb_path`, `lig_sdf_path`, and `geom_feat_path`. `--rename_cols none`
+uses these names directly; `default` supports the aliases defined in the training
+script. This schema is different from the main model's linear-label table.
+Structure paths are resolved against `--base_dir` when supplied.
 
 ```bash
 python main_train_kcat_expert.py \
-  --train_csv data/kcat_expert_train.csv \
-  --val_csv data/kcat_expert_val.csv \
-  --esm_path /path/to/esm2_t33_650M_UR50D \
+  --train_csv data/kcat_expert_train.csv --val_csv data/kcat_expert_val.csv \
+  --rename_cols none \
+  --esm_path backbone/esm2_t33_650M_UR50D \
+  --molt5_path backbone/molt5-base-smiles2caption \
   --out_dir runs/kcat_expert
-```
 
-Precompute the expert training embedding index:
-
-```bash
 python tools/precompute_train_embed.py \
-  --train_csv data/kcat_expert_train.csv \
-  --esm_path /path/to/esm2_t33_650M_UR50D \
-  --out_dir runs/moe_index \
-  --batch_size 8 \
-  --max_len 1024
-```
+  --train_csv data/kcat_expert_train.csv --seq_col sequence \
+  --esm_path backbone/esm2_t33_650M_UR50D \
+  --out_dir runs/moe_index --batch_size 8 --max_len 1024
 
-Run KinEAGER inference:
-
-```bash
 python main_infer_ensemble.py \
-  --test_csv data/testood40.csv \
+  --test_csv data/kcat_expert_test.csv --rename_cols none \
   --main_ckpt runs/id_full_seed42/seed42/predictor_best_ema.pt \
   --expert_ckpt runs/kcat_expert/best.pt \
   --train_emb_npy runs/moe_index/train_emb.npy \
-  --out_csv results/kineager_testood40.csv \
-  --esm_path /path/to/esm2_t33_650M_UR50D \
-  --molt5_path /path/to/molt5-base-smiles2caption \
-  --main_esm /path/to/esm2_t33_650M_UR50D \
-  --main_molt5 /path/to/molt5-base-smiles2caption \
-  --router_d0 0.15 \
-  --router_tau 0.05 \
-  --mc_samples 5 \
-  --batch_size 16
+  --esm_path backbone/esm2_t33_650M_UR50D \
+  --molt5_path backbone/molt5-base-smiles2caption \
+  --main_esm backbone/esm2_t33_650M_UR50D \
+  --main_molt5 backbone/molt5-base-smiles2caption \
+  --out_csv results/kineager_test.csv
 ```
 
-The output CSV includes `y_kcat`, `mu_main`, `s2_main`, `mu_expert`, `s2_expert`, `ood_score`, `w_main`, `w_expert`, `has_struct`, `mu_ensemble`, and `s2_ensemble`.
+The index must be built from the expert's training sequences, using the same ESM
+backbone as the query encoder. Mixture inference currently requires finite labels
+in the expert-format input and drops invalid labels; it is not an unlabeled
+screening interface. By default, missing protein/ligand structures disable the
+expert route for that sample. The main branch receives sequence/SMILES inputs.
+The output includes main/expert means and variances, OOD scores, mixture weights,
+structure availability, and ensemble mean/variance.
 
-## OOD and Baseline Evaluation
+## Additional workflows
 
-Use `tools/build_catpred_style_ood_splits.py` and `prep_splits_revision_struct.sh` to align sequence-cluster OOD splits with the manuscript protocol. Use `tools/run_external_baseline.py` and `tools/summarize_sota_results.py` to adapt external baseline predictions to the same metric scripts.
+- `tools/build_catpred_style_ood_splits.py`, `tools/build_catpred_iter_csv.py`, and
+  `tools/build_domain_ood_merged_csv.py` prepare OOD evaluation tables.
+- `prep_splits_revision_struct.sh` prepares structures for iteration-based splits.
+  `run_ours_10iter_inference.sh` and `run_ours_10iter_inference_km.sh` run prepared
+  kcat/Km iteration workflows. Inspect their environment settings before use:
+  they expect existing split tables, backbones, and checkpoints.
+- `tools/run_external_baseline.py` adapts external baseline repositories or supplied
+  prediction CSVs; it does not bundle baseline models. `tools/summarize_sota_results.py`
+  collects metrics. `tools/calibrate_moe_threshold.py` searches routing thresholds
+  from cached predictions; calibrate on held-out validation data, not test labels.
+- Mutation utilities (`insilico_mut_scan.py`, `pareto_filter.py`,
+  `plot_mut_landscape.py` under `tools/`) support computational
+  prioritization; their outputs do not establish experimental validity.
 
-Router thresholds can be selected from cached inference CSV files:
+Use each Python tool's `--help` for its input contract and available options.
+
+## Checks
 
 ```bash
-python tools/calibrate_moe_threshold.py \
-  --inputs id=results/moe_id.csv ood40=results/moe_ood40.csv ood60=results/moe_ood60.csv \
-  --out_csv results/calib_grid.csv \
-  --select_by overall \
-  --metric mae \
-  --top_k 10
+pip install pytest
+python -m pytest -q tests/test_path_config.py test_scripts
+python tests/smoke_moe_kcat.py
 ```
 
-## In Silico Mutation Scanning
-
-The mutation utilities use model outputs and gate-derived signals for hypothesis generation:
-
-```bash
-python tools/insilico_mut_scan.py --help
-python tools/pareto_filter.py --help
-python tools/plot_mut_landscape.py --help
-python tools/run_directed_evo.py --help
-```
-
-These scripts support computational prioritization only; experimental validation should be reported separately.
-
-## Reproducibility Notes
-
-- Fix `split_seed=42` for the IID group-pair split used in the manuscript.
-- Keep `split_meta.json`, `experiment_manifest.json`, `metrics.json`, and prediction files for each run.
-- Report sequence-cluster OOD results separately from IID multi-task results.
-- Treat CatPred literature numbers and local baseline reruns as different comparison protocols unless they share the same train/test construction.
-- Do not commit raw checkpoints, downloaded foundation models, intermediate run directories, cache files, or private wet-lab data.
+These checks cover paths, dataset metadata, missing labels, split leakage and
+mocked routing/fusion logic. The smoke script optionally checks an existing index
+at `runs/moe_index_smoke/train_emb.npy` and skips that part if it is absent.
+None of these checks substitutes for GPU training or benchmark reproduction.
 
 ## License
 

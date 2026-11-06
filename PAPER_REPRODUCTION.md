@@ -17,16 +17,16 @@ This document maps the KinEAGER manuscript workflow to the source files in this 
 | OOD-aware MoE router | `models/moe_kcat.py`, `main_infer_ensemble.py` |
 | Sequence-cluster OOD split adaptation | `tools/build_catpred_style_ood_splits.py`, `prep_splits_revision_struct.sh` |
 | External baseline adaptation | `tools/run_external_baseline.py`, `tools/summarize_sota_results.py` |
-| In silico mutation scanning | `tools/insilico_mut_scan.py`, `tools/pareto_filter.py`, `tools/run_directed_evo.py`, `tools/plot_mut_landscape.py` |
+| In silico mutation scanning | `tools/insilico_mut_scan.py`, `tools/pareto_filter.py`, `tools/plot_mut_landscape.py` |
 
 ## Minimal Reproduction Order
 
-1. Prepare the unified training table with source-domain identifiers and log10-transformed labels.
+1. Prepare the unified training table with source-domain identifiers and linear labels: kcat in s^-1 and Km in M. Training converts these to log10(kcat), log10(Km in mM), and log10(kcat/Km in M^-1 s^-1); do not pre-transform the main training labels.
 2. Build structural evidence arrays and physicochemical descriptors.
 3. Train the main multi-task predictor with fixed `split_seed=42` and `split_mode=group_pair`.
 4. Train the kcat expert on the specialist kcat table.
 5. Precompute the expert training ESM embedding index.
-6. Run main-model IID inference and KinEAGER sequence-cluster OOD inference.
+6. Evaluate the evidence-aware main model with the training entry point's `--eval_only` mode and matching feature/configuration arguments. The standalone `main_infer_predictor.py` currently accepts sequence/SMILES inputs only. Use `main_infer_ensemble.py` for kcat main/expert routing.
 7. Summarize metrics from `metrics.json`, prediction CSV/NPZ files, and split metadata.
 8. Run counterfactual evidence ablations by changing structural and physical evidence modes while keeping the same split.
 
@@ -53,4 +53,4 @@ Large artifacts should be released through a data archive, Zenodo/Figshare recor
 
 ## Excluded from Source Control
 
-The source repository intentionally excludes raw data tables, model checkpoints, foundation model downloads, run directories, generated figures, spreadsheet supplements, notebooks, and private wet-lab files. The `.gitignore` file enforces these exclusions.
+Raw data, checkpoints, foundation models, notebooks, and private wet-lab files are not distributed here. The `.gitignore` file excludes common data and run artifacts; keep any additional generated outputs outside source control. See [README.md](README.md) for data contracts, runnable command templates, and limitations.
