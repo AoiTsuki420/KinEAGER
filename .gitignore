@@ -4,9 +4,9 @@
 .pytest_cache/
 wandb/
 swanlog/
-backbone/
-weights/
-data/
+/backbone/
+/weights/
+/data/
 .venv/
 outputs/
 runs/

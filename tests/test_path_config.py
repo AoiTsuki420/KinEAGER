@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from unittest.mock import patch
 
-from path_config import DEFAULT_PATHS, resolve_runtime_paths
+from kineager.paths import DEFAULT_PATHS, resolve_runtime_paths
 
 
 def test_defaults_are_independent_of_working_directory(tmp_path, monkeypatch):

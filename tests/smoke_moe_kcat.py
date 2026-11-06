@@ -16,7 +16,7 @@ import torch.nn as nn
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 
-from models.moe_kcat import KinEAGER, OODRouter, build_router_from_npy  # noqa: E402
+from kineager.models.moe_kcat import KinEAGER, OODRouter, build_router_from_npy  # noqa: E402
 
 
 
