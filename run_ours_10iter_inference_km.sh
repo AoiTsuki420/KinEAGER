@@ -1,23 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ -d /root/autodl-tmp/gptsrc_ddp ]; then
-  export ROOT=/root/autodl-tmp/gptsrc_ddp
-elif [ -d /root/autodl-tmp/gptsrc ]; then
-  export ROOT=/root/autodl-tmp/gptsrc
-else
-  echo "[ERR] cannot find repo root"; exit 1
-fi
-export DATA_ROOT=${DATA_ROOT:-/autodl-fs/data/runs/splits/splits_revision}
-export OUT_ROOT=${OUT_ROOT:-/root/autodl-tmp/runs/core5_splits_revision_km}
+export ROOT="${ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)}"
+cd "$ROOT"
+export DATA_ROOT=${DATA_ROOT:-$ROOT/data/splits}
+export OUT_ROOT=${OUT_ROOT:-$ROOT/results/km}
 export OURS_ENV=${OURS_ENV:-}
-export OURS_WEIGHTS=${OURS_WEIGHTS:-/root/autodl-fs/runs/id_full_seed42/seed42/predictor_best_ema.pt}
-export OURS_SCALER=${OURS_SCALER:-/root/autodl-fs/runs/id_full_seed42/seed42/scaler_fold.json}
-export ESM_PATH=${ESM_PATH:-/root/autodl-fs/models/esm2_t33_650M_UR50D}
-export MOLT5_PATH=${MOLT5_PATH:-/root/autodl-fs/models/molt5-base-smiles2caption}
+export OURS_WEIGHTS=${OURS_WEIGHTS:-$ROOT/runs/id_full_seed42/seed42/predictor_best_ema.pt}
+export OURS_SCALER=${OURS_SCALER:-$ROOT/runs/id_full_seed42/seed42/scaler_fold.json}
+export ESM_PATH=${ESM_PATH:-$ROOT/backbone/esm2_t33_650M_UR50D}
+export MOLT5_PATH=${MOLT5_PATH:-$ROOT/backbone/molt5-base-smiles2caption}
 export OMP_NUM_THREADS=1
 export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0}
-unset TRANSFORMERS_OFFLINE HF_HUB_OFFLINE PIP_NO_INDEX 2>/dev/null || true
 
 __check_writable () {
   local d="$1"
@@ -41,7 +35,7 @@ export TORCH_HOME=${TORCH_HOME:-$DEFAULT_TORCH}
 
 mkdir -p "$OUT_ROOT/_logs" "$OUT_ROOT/summary" "$TRANSFORMERS_CACHE" "$TORCH_HOME/hub/checkpoints"
 
-ESM2_LOCAL_PT=${ESM2_LOCAL_PT:-/root/autodl-fs/models/esm2_t33_650M_UR50D/esm2_t33_650M_UR50D.pt}
+ESM2_LOCAL_PT=${ESM2_LOCAL_PT:-$ROOT/backbone/esm2_t33_650M_UR50D/esm2_t33_650M_UR50D.pt}
 [ -f "$ESM2_LOCAL_PT" ] && cp -f "$ESM2_LOCAL_PT" "$TORCH_HOME/hub/checkpoints/esm2_t33_650M_UR50D.pt" || true
 
 preflight () {

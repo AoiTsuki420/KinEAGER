@@ -5,8 +5,8 @@
 
 用法:
   python tools/precompute_train_embed.py \
-      --train_csv /root/autodl-fs/itera/train_merged_with_kcat_geom_clean.csv \
-      --esm_path  /root/autodl-fs/models/esm2_t33_650M_UR50D \
+      --train_csv data/train_merged_with_kcat_geom_clean.csv \
+      --esm_path  facebook/esm2_t33_650M_UR50D \
       --out_dir   runs/moe_index \
       --batch_size 8 --max_len 1024
 

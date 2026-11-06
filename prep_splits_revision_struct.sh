@@ -1,19 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ -d /root/autodl-tmp/gptsrc_ddp ]; then
-  export ROOT=/root/autodl-tmp/gptsrc_ddp
-elif [ -d /root/autodl-tmp/gptsrc ]; then
-  export ROOT=/root/autodl-tmp/gptsrc
-else
-  echo "[ERR] cannot find repo root"; exit 1
-fi
+export ROOT="${ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)}"
+cd "$ROOT"
 
-export DATA_ROOT=${DATA_ROOT:-/autodl-fs/data/runs/splits/splits_revision}
-export WORK_ROOT=${WORK_ROOT:-/root/autodl-tmp/splits_revision_with_struct}
-export PDB_JSON=${PDB_JSON:-/root/autodl-fs/kcat_max_wt_singleSeqs_wpdbs_pdbrecords.json}
-export PDB_OUT=${PDB_OUT:-/root/autodl-fs/struct_cache/pdbs}
-export SDF_OUT=${SDF_OUT:-/root/autodl-fs/struct_cache/sdfs}
+export DATA_ROOT=${DATA_ROOT:-$ROOT/data/splits}
+export WORK_ROOT=${WORK_ROOT:-$ROOT/data/splits_with_struct}
+export PDB_JSON=${PDB_JSON:-$ROOT/data/pdbrecords.json}
+export PDB_OUT=${PDB_OUT:-$ROOT/data/struct_cache/pdbs}
+export SDF_OUT=${SDF_OUT:-$ROOT/data/struct_cache/sdfs}
 export OURS_ENV=${OURS_ENV:-}
 
 run_py () {

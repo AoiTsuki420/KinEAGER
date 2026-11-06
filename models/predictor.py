@@ -451,8 +451,8 @@ class QualityAwarePhysFusion(nn.Module):
 class KineticsPredictor(nn.Module):
     def __init__(self,
                  device="cuda",
-                 esm_model="/root/autodl-tmp/models/esm2_t33_650M_UR50D",
-                 molt5_model="/root/autodl-tmp/models/molt5-base-smiles2caption",
+                 esm_model="facebook/esm2_t33_650M_UR50D",
+                 molt5_model="laituan245/molt5-base-smiles2caption",
                  cfg: PredictorConfig = PredictorConfig(),
                  use_lora=True,
                  lora_r=8,

@@ -13,7 +13,7 @@
   fit_summary.json            (isotonic 节点、最优 τ)
 用法示例:
   python posthoc_calibrate_loso.py \
-      --pred /root/autodl-fs/runs/.../ood_skidkcat/predictions.csv \
+      --pred runs/example/ood_skidkcat/predictions.csv \
       --task kcat \
       --calib_n 200 --seed 42 \
       --out_dir ./posthoc_skidkcat

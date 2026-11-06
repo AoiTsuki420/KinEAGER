@@ -46,6 +46,23 @@ pip install -r requirements.txt
 
 The original experiments used PyTorch, HuggingFace Transformers, ESM-2 (`esm2_t33_650M_UR50D`), MolT5 (`molt5-base-smiles2caption`), RDKit, pandas, numpy, scikit-learn, scipy, tqdm, and optional wandb logging. For offline servers, download ESM-2 and MolT5 locally and pass their local paths to the training and inference scripts.
 
+## Paths and Local Models
+
+Python training defaults use `data/`, `runs/`, and `weights/` under the checkout.
+Set `CATA_PROJECT_ROOT` to use another workspace; individual paths can be overridden
+with `CATA_*` variables defined in `path_config.py`. Relative filesystem overrides
+are resolved against that workspace. The platform-specific profiles have been removed.
+
+Encoder defaults use the Hugging Face model identifiers
+`facebook/esm2_t33_650M_UR50D` and `laituan245/molt5-base-smiles2caption`.
+For local models, pass their directories via the command-line model options or
+`CATA_ESM_MODEL_PATH` / `CATA_MOLT5_MODEL_PATH` for main-model training.
+
+The optional shell workflows locate the checkout from their script location.
+Set `DATA_ROOT`, `OUT_ROOT`, `ESM_PATH`, `MOLT5_PATH`, and checkpoint variables as
+needed; their local model defaults point to `backbone/` under the checkout.
+Existing offline-mode environment settings are respected.
+
 ## Data Preparation
 
 Build the unified multi-task table:
@@ -188,18 +205,6 @@ These scripts support computational prioritization only; experimental validation
 - Report sequence-cluster OOD results separately from IID multi-task results.
 - Treat CatPred literature numbers and local baseline reruns as different comparison protocols unless they share the same train/test construction.
 - Do not commit raw checkpoints, downloaded foundation models, intermediate run directories, cache files, or private wet-lab data.
-
-## Citation
-
-```bibtex
-@article{kineager2026,
-  title   = {KinEAGER: Evidence-aware Multi-task Modeling and Uncertainty Calibration for Enzyme Kinetics Prediction},
-  author  = {TBD},
-  journal = {TBD},
-  year    = {2026},
-  url     = {https://github.com/Rieide/KinEAGER}
-}
-```
 
 ## License
 

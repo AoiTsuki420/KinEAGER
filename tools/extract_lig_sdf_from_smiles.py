@@ -5,8 +5,8 @@ RDKit ETKDG embed → MMFF94 优化 → 写 SDF 文件。
 
 用法:
   python tools/extract_lig_sdf_from_smiles.py \
-      --csvs /autodl-fs/data/runs/splits/splits_revision/iteration_*/kcat_*.csv \
-      --sdf_out_dir /root/autodl-tmp/lig_sdfs \
+      --csvs data/runs/splits/splits_revision/iteration_*/kcat_*.csv \
+      --sdf_out_dir data/lig_sdfs \
       --smiles_col reactant_smiles \
       --inplace
 

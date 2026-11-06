@@ -11,11 +11,11 @@ JSON 格式（CatPred-DB 原生）:
 
 用法:
   python tools/extract_pdb_from_catpred_json.py \
-      --json  /root/autodl-fs/.../kcat_max_wt_singleSeqs_wpdbs_pdbrecords.json \
-      --csvs  /root/autodl-fs/itera/test19_ready.csv \
-              /root/autodl-fs/itera/test40_ready.csv \
-              /root/autodl-fs/itera/test60_ready.csv \
-      --pdb_out_dir /root/autodl-fs/itera/catpred_pdbs \
+      --json  data/kcat_max_wt_singleSeqs_wpdbs_pdbrecords.json \
+      --csvs  data/test19_ready.csv \
+              data/test40_ready.csv \
+              data/test60_ready.csv \
+      --pdb_out_dir data/catpred_pdbs \
       --seq_col sequence \
       --match_by seq
 

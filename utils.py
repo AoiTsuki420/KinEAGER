@@ -272,7 +272,7 @@ def resume_checkpoint_if_available(
     scheduler=None,
     scaler=None,
     ema=None,
-    weights_dir="/root/autodl-tmp/weights",
+    weights_dir="weights",
     device="cuda",
     verbose=True,   # 新增：控制是否打印
 ):
@@ -426,7 +426,7 @@ def resume_checkpoint_if_available(
 
 
 def save_training_checkpoint(model, optimizer, scheduler, scaler, ema, epoch, global_step,
-                             weights_dir="/root/autodl-tmp/weights", tag=None):
+                             weights_dir="weights", tag=None):
     """
     仅在 rank0 调用；会覆盖主文件，并可选写出带时间戳的副本。
     tag: 例如 "hourly" / "epoch" 用于区分副本文件。

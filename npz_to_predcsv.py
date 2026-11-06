@@ -10,11 +10,11 @@
 
 用法:
   python npz_to_predcsv.py \
-      --npz   /root/autodl-fs/runs/ood_catapro/test_predictions.npz \
-      --csv   /root/autodl-fs/runs/ood_catapro/test_set.csv \
-      --scaler /root/autodl-fs/runs/ood_catapro/scaler_fold.json \
+      --npz   runs/ood_catapro/test_predictions.npz \
+      --csv   runs/ood_catapro/test_set.csv \
+      --scaler runs/ood_catapro/scaler_fold.json \
       --task  kcat \
-      --out   /root/autodl-fs/runs/ood_catapro/predictions.csv
+      --out   runs/ood_catapro/predictions.csv
 """
 import argparse, json, sys
 import numpy as np

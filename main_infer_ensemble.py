@@ -117,9 +117,9 @@ def main():
     ap.add_argument("--train_emb_npy", required=True,
                     help="由 tools/precompute_train_embed.py 产出的 .npy")
     ap.add_argument("--out_csv", required=True)
-    ap.add_argument("--esm_path", default="/root/autodl-fs/models/esm2_t33_650M_UR50D",
+    ap.add_argument("--esm_path", default="facebook/esm2_t33_650M_UR50D",
                     help="expert / router 共用的 ESM2 路径（与索引一致，建议 650M）")
-    ap.add_argument("--molt5_path", default="/root/autodl-fs/models/molt5-base-smiles2caption")
+    ap.add_argument("--molt5_path", default="laituan245/molt5-base-smiles2caption")
     ap.add_argument("--main_esm", default="facebook/esm2_t12_35M_UR50D")
     ap.add_argument("--main_molt5", default="laituan245/molt5-base-smiles2caption")
     ap.add_argument("--source_id", type=int, default=0)

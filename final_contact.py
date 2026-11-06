@@ -385,16 +385,3 @@ def load_final_contact_npz(
         expected_lig_dim=expected_lig_dim,
     )
     return FinalContactStore(cfg).load(mmap_mode=mmap_mode)
-
-
-"""
-store = load_final_contact_npz("/root/autodl-fs/data/skid_kcat_struct_vecs_adv.npz")
-
-store.set_ablation(FinalContactAblationConfig(mode="none"))
-store.set_ablation(FinalContactAblationConfig(mode="random", random_seed=42, random_distribution="normal", random_scale=1.0))
-store.set_ablation(FinalContactAblationConfig(mode="real"))
-
-store.validate_for_df_by_rowid(df_train)
-store.validate_for_df_by_rowid(df_val)
-
-"""

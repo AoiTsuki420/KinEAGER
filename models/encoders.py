@@ -4,7 +4,7 @@ from transformers import EsmModel, EsmTokenizer, T5Tokenizer, T5EncoderModel
 
 
 class ProteinEncoder(nn.Module):
-    def __init__(self, esm_model="/root/autodl-tmp/models/esm2_t33_650M_UR50D",
+    def __init__(self, esm_model="facebook/esm2_t33_650M_UR50D",
                  d_model=768, device="cuda",
                  backbone_obj=None, train_backbone=False,
                  tokenizer_obj=None):
@@ -51,17 +51,9 @@ class ProteinEncoder(nn.Module):
         tok, mask = self.encode_tokens(seqs)
         tok = self.proj(tok)
         return tok, mask
-import torch
-import torch.nn as nn
-from transformers import T5Tokenizer, T5EncoderModel
-
-import torch
-import torch.nn as nn
-from transformers import T5Tokenizer, T5EncoderModel
-
 
 class LigandEncoder(nn.Module):
-    def __init__(self, molt5_model="/root/autodl-tmp/models/molt5-base-smiles2caption",
+    def __init__(self, molt5_model="laituan245/molt5-base-smiles2caption",
                  d_model=768, device="cuda",
                  backbone_obj=None, train_backbone=False,
                  tokenizer_obj=None):

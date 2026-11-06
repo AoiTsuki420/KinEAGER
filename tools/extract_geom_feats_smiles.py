@@ -5,9 +5,9 @@
 
 用法:
   python tools/extract_geom_feats_smiles.py \
-      --csv   /autodl-fs/data/catpred_kcat_train.csv \
-      --out_dir /autodl-fs/data/catpred_geom \
-      --update_csv /autodl-fs/data/catpred_kcat_train_with_geom.csv \
+      --csv   data/catpred_kcat_train.csv \
+      --out_dir data/catpred_geom \
+      --update_csv data/catpred_kcat_train_with_geom.csv \
       --smiles_col smiles \
       --id_col entry_id
 """
