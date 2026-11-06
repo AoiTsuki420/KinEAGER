@@ -203,4 +203,4 @@ These scripts support computational prioritization only; experimental validation
 
 ## License
 
-Add the final project license before public release.
+This project is licensed under the [MIT License](LICENSE).
